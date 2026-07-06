@@ -1,0 +1,89 @@
+name: Generate briefing & deploy to GitHub Pages
+
+on:
+  # Runs every hour; the first job step checks the current Berlin time and
+  # skips everything else unless it's ~08:00, ~14:00 or ~20:00. Doing it this
+  # way (instead of three separate UTC cron lines) means the schedule stays
+  # correct across the CEST/CET daylight-saving switch without any manual
+  # maintenance twice a year.
+  schedule:
+    - cron: '0 * * * *'
+  # Lets you trigger a run manually from the Actions tab (e.g. to test).
+  workflow_dispatch: {}
+  # Redeploy (with fresh data) whenever the app code itself changes.
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+    steps:
+      - name: Check if this is one of the three daily slots (Europe/Berlin)
+        id: gate
+        run: |
+          hour=$(TZ=Europe/Berlin date +%H)
+          echo "Aktuelle Berlin-Stunde: $hour"
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "$hour" = "08" ] || [ "$hour" = "14" ] || [ "$hour" = "20" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.gate.outputs.run == 'true'
+        run: npm ci
+
+      - name: Generate briefing via Gemini API
+        if: steps.gate.outputs.run == 'true'
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: npm run generate
+
+      - name: Build static site
+        if: steps.gate.outputs.run == 'true'
+        run: npm run build
+
+      - name: Setup Pages
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: steps.gate.outputs.run == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
