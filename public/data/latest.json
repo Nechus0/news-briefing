@@ -1,0 +1,56 @@
+{
+  "id": "seed",
+  "timestamp": "2026-07-06T08:00:00.000Z",
+  "formattedDate": "Beispiel-Ausgabe (wird nach dem ersten automatischen Lauf ersetzt)",
+  "schedule": "08:00",
+  "isSimulated": true,
+  "executiveSummary": [
+    "Dies ist eine Platzhalter-Ausgabe. Sobald der GitHub-Actions-Workflow zum ersten Mal erfolgreich läuft, wird diese Datei automatisch durch echte, aktuelle Inhalte ersetzt.",
+    "Bundespolitik Deutschland: Platzhalter.",
+    "Globale Gesundheit: Platzhalter.",
+    "Krieg in der Ukraine: Platzhalter.",
+    "Nahost-Konflikt: Platzhalter."
+  ],
+  "categories": [
+    {
+      "id": "world-news",
+      "name": "Weltnachrichten",
+      "headline": "Beispiel-Schlagzeile aus dem Weltgeschehen",
+      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
+      "whyRelevant": "Platzhalter.",
+      "sources": [{ "title": "CNN", "url": "https://edition.cnn.com/" }]
+    },
+    {
+      "id": "german-politics",
+      "name": "Bundespolitik Deutschland",
+      "headline": "Beispiel-Schlagzeile zur deutschen Bundespolitik",
+      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
+      "whyRelevant": "Platzhalter.",
+      "sources": [{ "title": "Tagesschau", "url": "https://www.tagesschau.de/" }]
+    },
+    {
+      "id": "global-health",
+      "name": "Globale Gesundheit",
+      "headline": "Beispiel-Schlagzeile zur globalen Gesundheit",
+      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
+      "whyRelevant": "Platzhalter.",
+      "sources": [{ "title": "WHO", "url": "https://www.who.int/" }]
+    },
+    {
+      "id": "ukraine-war",
+      "name": "Krieg in der Ukraine",
+      "headline": "Beispiel-Schlagzeile zum Krieg in der Ukraine",
+      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
+      "whyRelevant": "Platzhalter.",
+      "sources": [{ "title": "BBC", "url": "https://www.bbc.com/news" }]
+    },
+    {
+      "id": "middle-east-conflict",
+      "name": "Nahost-Konflikt",
+      "headline": "Beispiel-Schlagzeile zum Nahost-Konflikt",
+      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
+      "whyRelevant": "Platzhalter.",
+      "sources": [{ "title": "Al Jazeera", "url": "https://www.aljazeera.com/" }]
+    }
+  ]
+}

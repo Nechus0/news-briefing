@@ -1,0 +1,5 @@
+{
+  "name": "Daily News Briefing",
+  "description": "Eine iOS-artig gestaltete Web-App mit KI-generierten Daily News Briefings (Weltgeschehen, Deutschland, Globale Gesundheit, Ukraine Krieg, Nahost Konflikt), 3x täglich automatisch aktualisiert via GitHub Actions und Gemini API, gehostet auf GitHub Pages.",
+  "requestFramePermissions": []
+}
