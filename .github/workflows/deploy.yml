@@ -1,7 +1,7 @@
 name: Generate & email daily briefing
 
 on:
-  # Fires once per hour at minute 45. Checking Berlin time at runtime (instead
+  # Fires once per hour at minute 50. Checking Berlin time at runtime (instead
   # of a fixed UTC cron line) keeps this correct across the CEST/CET
   # daylight-saving switch automatically - Germany's offset from UTC is
   # always a whole number of hours, so minutes always line up between UTC and
@@ -19,7 +19,7 @@ on:
   #     no briefing that day at all, since there was only a single attempt.
   #     Now the SEND_HOUR and SEND_HOUR+1 runs act as automatic retries.
   schedule:
-    - cron: '45 * * * *'
+    - cron: '50 * * * *'
   # Lets you trigger a run manually from the Actions tab - sends immediately
   # (skips the "wait until SEND_HOUR:00" step below) and ignores the dedupe
   # check, so this doubles as the way to send yourself a test email on demand.
