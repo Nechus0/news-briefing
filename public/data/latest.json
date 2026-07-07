@@ -1,93 +1,93 @@
 {
   "id": "2026-07-07-08:00",
-  "timestamp": "2026-07-07T01:27:10.959Z",
+  "timestamp": "2026-07-07T08:49:39.678Z",
   "formattedDate": "Dienstag, 7. Juli 2026",
   "schedule": "08:00",
   "executiveSummary": [
-    "Vor dem bevorstehenden NATO-Gipfel in Ankara verteidigen die europäischen Mitgliedstaaten selbstbewusst ihre gestiegenen Verteidigungsausgaben gegen Forderungen von US-Präsident Donald Trump.",
-    "Bundeskanzler Friedrich Merz musste sich in einer lebhaften Fragestunde im Bundestag für den Haushaltsplan 2026 und die geplante Wiedereinführung einer Teilwehrpflicht rechtfertigen.",
-    "Russland hat am Vorabend des NATO-Gipfels schwere Raketenangriffe auf den Großraum Kiew geflogen, was den ukrainischen Präsidenten Selenskyj zu erneuten Bitten um weitreichende Flugabwehrsysteme veranlasste.",
-    "Die Hamas kündigte die Auflösung ihrer Regierungsbehörden im Gazastreifen an, um die geplante Übergabe an eine technokratische Übergangsverwaltung im Rahmen eines Waffenstillstandsabkommens zu ermöglichen.",
-    "Die Weltgesundheitsorganisation hat in der Demokratischen Republik Kongo klinische Studien zur Behandlung des tödlichen Ebola-Bundibugyo-Virus gestartet und parallel einen Hantavirus-Ausbruch auf einem Kreuzfahrtschiff für beendet erklärt."
+    "Ein Pariser Berufungsgericht entscheidet heute über die politische Zukunft der rechtspopulistischen Politikerin Marine Le Pen und ihre mögliche Präsidentschaftskandidatur 2027 [2.4.1].",
+    "Das schwarz-rote Bundeskabinett hat den Haushaltsentwurf für 2027 mit Rekordausgaben und massiv erhöhter Neuverschuldung unter anderem für die Verteidigung beschlossen.",
+    "Zum Auftakt des NATO-Gipfels in Ankara drängt die Ukraine nach den verheerenden russischen Raketenangriffen auf Kiew auf die rasche Lieferung weiterer Flugabwehrsysteme.",
+    "Die Vereinten Nationen warnen vor schrumpfenden humanitären Zonen in Gaza, während die Hamas Israel vorwirft, ein administratives Vakuum erzwingen zu wollen.",
+    "Die WHO hat den ersten spezifischen Diagnostiktest für das zirkulierende Ebola-Bundibugyo-Virus zugelassen und den Hantavirus-Ausbruch auf einem Kreuzfahrtschiff endgültig für beendet erklärt."
   ],
   "categories": [
     {
       "id": "world-news",
       "name": "Weltnachrichten",
-      "headline": "Europa kontert Kritik Trumps an Verteidigungsausgaben vor NATO-Gipfel in Ankara",
-      "brief": "Im Vorfeld des NATO-Gipfels in Ankara haben die europäischen Bündnispartner und Kanada ihre militärischen Investitionen gegen anhaltende Kritik verteidigt. US-Präsident Donald Trump hatte die bisherigen Beiträge der Alliierten abermals als unzureichend bezeichnet und höhere Zielmarken gefordert. Bundeskanzler Friedrich Merz sowie der künftige NATO-Generalsekretär Mark Rutte verwiesen darauf, dass die europäischen Investitionen in den vergangenen Monaten signifikant gestiegen seien. Diplomatische Kreise erwarten intensive Debatten in der türkischen Hauptstadt, während das Bündnis offiziell Geschlossenheit signalisieren will.",
+      "headline": "Gericht entscheidet über Präsidentschaftskandidatur von Marine Le Pen",
+      "brief": "In Paris entscheidet heute ein Berufungsgericht, ob Marine Le Pen bei der französischen Präsidentschaftswahl 2027 antreten darf [2.4.1]. Die Politikerin des rechtspopulistischen Rassemblement National hatte gegen ein Urteil vom März 2025 wegen Veruntreuung von EU-Geldern Berufung eingelegt. Sollte die fünfjährige Sperre für öffentliche Ämter bestätigt werden, könnte ihr 30-jähriger Schützling Jordan Bardella die Kandidatur übernehmen. Unterdessen blickt Europa gespannt auf den heute beginnenden NATO-Gipfel in Ankara, der weitreichende sicherheitspolitische Entscheidungen treffen soll.",
       "sources": [
         {
-          "title": "Tagesschau",
-          "url": "https://www.tagesschau.de/ausland/europa/"
+          "title": "Der Spiegel",
+          "url": "https://www.spiegel.de/politik/ausland/"
         },
         {
-          "title": "CNN",
-          "url": "https://edition.cnn.com/world/europe"
+          "title": "Le Monde",
+          "url": "https://www.lemonde.fr/politique/"
         }
       ]
     },
     {
       "id": "german-politics",
       "name": "Bundespolitik Deutschland",
-      "headline": "Bundeskanzler Merz stellt sich im Bundestag der Kritik an Haushaltsplänen und Wehrpflicht",
-      "brief": "Bundeskanzler Friedrich Merz hat sich in einer live übertragenen Fragestunde im Bundestag den Fragen und Vorwürfen der Parlamentarier gestellt. Im Zentrum der Kontroversen standen vor allem der umstrittene Bundeshaushalt 2026 sowie die Pläne zur Modernisierung und hybriden Wiedereinführung der Wehrpflicht. Während Teile der Jugend auf der Straße gegen mögliche Zwangsrekrutierungen protestieren, verteidigte Verteidigungsminister Boris Pistorius die Maßnahmen als essenziell für die NATO-Verpflichtungen Deutschlands. Die Regierung betonte, dass angesichts der angespannten Sicherheitslage in Europa keine Alternative zu den drastischen Einschnitten bestehe.",
+      "headline": "Bundeskabinett beschließt Haushaltsentwurf 2027 mit massiver Neuverschuldung",
+      "brief": "Das schwarz-rote Bundeskabinett hat den Regierungsentwurf für den Haushalt 2027 auf den Weg gebracht. Dieser sieht Rekordausgaben von 555,4 Milliarden Euro sowie eine hohe Neuverschuldung von 118,7 Milliarden Euro vor. Finanzminister Lars Klingbeil verteidigte die Pläne mit dem Hinweis, dass allein der Verteidigungsetat um ein Drittel auf rund 109,7 Milliarden Euro steige. Gleichzeitig erntet die Regierung heftige Kritik von Umweltverbänden, da zur Deckung von Lücken im Kernhaushalt Mittel aus dem Klima- und Transformationsfonds zweckentfremdet werden.",
       "sources": [
         {
-          "title": "Die Zeit",
-          "url": "https://www.zeit.de/politik/deutschland/"
+          "title": "ZDFheute",
+          "url": "https://www.zdf.de/nachrichten/politik/"
         },
         {
-          "title": "Der Spiegel",
-          "url": "https://www.spiegel.de/politik/deutschland/"
+          "title": "Tagesschau",
+          "url": "https://www.tagesschau.de/inland/innenpolitik/"
         }
       ]
     },
     {
       "id": "ukraine-war",
       "name": "Krieg in der Ukraine",
-      "headline": "Mehr als 20 Tote bei schweren russischen Angriffen auf Kiew vor NATO-Gipfel",
-      "brief": "Die ukrainische Hauptstadt Kiew und ihr Umland sind Ziel einer der schwersten russischen Angriffswellen der jüngeren Zeit geworden. Durch Raketen- und Drohnenbeschuss kamen ersten Berichten zufolge mindestens 26 Menschen ums Leben, Dutzende weitere wurden verletzt. Der ukrainische Präsident Wolodymyr Selenskyj beklagte angesichts der Angriffe die unzureichende Ausstattung seiner Streitkräfte mit Patriot-Abfangraketen. Das Timing der Bombardements kurz vor Beginn des NATO-Gipfels wird als gezielte Machtdemonstration Moskaus gegenüber dem westlichen Bündnis gewertet.",
+      "headline": "NATO-Gipfel beginnt nach verheerenden Raketenangriffen auf Kiew",
+      "brief": "Die militärische Lage in der Ukraine zeigt seit der letzten Ausgabe keine wesentlichen neuen Entwicklungen. Nach den verheerenden russischen Raketenangriffen auf Kiew am Vorabend steht der heute in Ankara beginnende NATO-Gipfel jedoch ganz im Zeichen der Ukraine-Unterstützung. Die Ukraine drängt die Alliierten weiterhin auf rasche Zusagen für zusätzliche Flugabwehrsysteme. Beobachter werten die intensivierten Bombardements durch Wladimir Putin im Vorfeld als gezielte Provokation zum Auftakt des Gipfeltreffens.",
       "sources": [
         {
           "title": "BBC News",
-          "url": "https://www.bbc.com/news/world-europe"
+          "url": "https://www.bbc.com/news/world/europe"
         },
         {
-          "title": "The Guardian",
-          "url": "https://www.theguardian.com/world/ukraine"
+          "title": "Die Zeit",
+          "url": "https://www.zeit.de/politik/ausland/"
         }
       ]
     },
     {
       "id": "middle-east-conflict",
       "name": "Nahost-Konflikt",
-      "headline": "Hamas löst Gaza-Regierungskomitee im Zuge der Waffenstillstands-Umsetzung auf",
-      "brief": "Die Hamas hat die sofortige Auflösung ihres Verwaltungskomitees im Gazastreifen bekanntgegeben. Dieser Schritt soll den Weg für das sogenannte Nationale Komitee für die Verwaltung von Gaza (NCAG) ebnen, ein von US-Diplomaten unterstütztes Gremium zur Nachkriegsorganisation. Ein Sprecher der Organisation betonte, man komme damit den Verpflichtungen eines umfassenden Waffenstillstands nach. Die Entwaffnung der Milizen bleibt jedoch der zentrale Streitpunkt in den Verhandlungen, da Israel ohne diesen Schritt eine Übernahme durch die Technokraten-Verwaltung ablehnt.",
+      "headline": "Sorge um administratives Vakuum und humanitäre Zonen in Gaza",
+      "brief": "Nach der Ankündigung der Hamas, ihr Verwaltungskomitee aufzulösen, wirft die Organisation Israel vor, gezielt ein administratives Vakuum im Gazastreifen zu forcieren. Gleichzeitig warnen die Vereinten Nationen vor einer Ausweitung der israelisch kontrollierten Zonen, die humanitäre Hilfe für Zivilisten stark einschränken. Darüber hinaus häufen sich Berichte über rechtswidrige Tötungen: Der UN-Menschenrechtsrat verurteilte Hinrichtungen durch Hamas-nahe Gruppen. Amnesty International schlug zudem Alarm wegen der lebensbedrohlichen Haftbedingungen eines prominenten palästinensischen Kinderarztes.",
       "sources": [
         {
           "title": "Al Jazeera",
           "url": "https://www.aljazeera.com/middle-east/"
         },
         {
-          "title": "Middle East Eye",
-          "url": "https://www.middleeasteye.net/news/hamas-decision-dissolve-gaza-government-nod-trump-expert-says"
+          "title": "Amnesty International",
+          "url": "https://www.amnesty.org/en/latest/news/"
         }
       ]
     },
     {
       "id": "global-health",
       "name": "Globale Gesundheit",
-      "headline": "WHO testet Ebola-Therapien im Kongo und erklärt Hantavirus-Ausbruch für beendet",
-      "brief": "Die Weltgesundheitsorganisation hat angesichts einer eskalierenden Ebola-Epidemie in der Demokratischen Republik Kongo klinische Studien für zwei neue Therapien gestartet. Mehr als 500 Menschen sind dort bereits an dem seltenen Bundibugyo-Virenstamm gestorben. Gute Nachrichten gab es hingegen in Bezug auf einen rätselhaften Ausbruch von Hantaviren an Bord des Kreuzfahrtschiffes 'Hondius', den WHO-Chef Tedros Adhanom Ghebreyesus nun für offiziell beendet erklärte. Das Geschehen forderte insgesamt drei Todesopfer bei weltweit 13 gemeldeten Infektionen und zog eine umfangreiche globale Kontaktverfolgung nach sich.",
+      "headline": "WHO treibt Ebola-Diagnostik voran und beendet Hantavirus-Alarm",
+      "brief": "Nachdem die Weltgesundheitsorganisation den Hantavirus-Ausbruch auf einem Kreuzfahrtschiff bereits für beendet erklärt hat, hat nun auch die letzte Kontaktperson ihre Quarantäne negativ getestet abgeschlossen. Im Zentrum der Bemühungen steht weiterhin der Ausbruch des Ebola-Bundibugyo-Virus in der Demokratischen Republik Kongo. Die WHO hat dafür den ersten spezifischen Diagnostiktest zur Notfallverwendung zugelassen und klinische Studien für Behandlungen gestartet. Das Europäische Zentrum für die Prävention und Kontrolle von Krankheiten (ECDC) bewertet das Risiko einer Ausbreitung nach Europa weiterhin als sehr gering.",
       "sources": [
         {
-          "title": "WHO News",
-          "url": "https://www.who.int/news"
+          "title": "WHO",
+          "url": "https://www.who.int/emergencies/disease-outbreak-news"
         },
         {
-          "title": "Deutsches Ärzteblatt",
-          "url": "https://www.aerzteblatt.de/nachrichten/"
+          "title": "Health Policy Watch",
+          "url": "https://healthpolicy-watch.news/"
         }
       ]
     }
