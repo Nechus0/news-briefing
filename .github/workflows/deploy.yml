@@ -15,7 +15,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   briefing:
@@ -52,6 +52,24 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run generate
+
+      # Commits the freshly generated data back into the repo right away
+      # (independent of whether the email later succeeds), so tomorrow's run
+      # can read it as "already covered" context - see loadPreviousEdition()
+      # in scripts/generate-briefing.ts. No hosting needed, this is purely
+      # for the model's own continuity between days.
+      - name: Commit updated briefing data
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data/latest.json
+          if git diff --staged --quiet; then
+            echo "Keine Änderungen an den Briefing-Daten."
+          else
+            git commit -m "Aktualisiere Briefing-Daten ($(TZ=Europe/Berlin date '+%Y-%m-%d %H:%M')) [skip ci]"
+            git push
+          fi
 
       # Only the real 07:45 schedule waits for the 08:00 send time. Manual
       # test runs (workflow_dispatch) skip straight to sending, so clicking
