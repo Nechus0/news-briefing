@@ -18,7 +18,7 @@ on:
   #     no briefing that day at all, since there was only a single attempt.
   #     Now the 08:45 and 09:45 runs act as automatic retries.
   schedule:
-    - cron: '58 * * * *'
+    - cron: '05 * * * *'
   # Lets you trigger a run manually from the Actions tab - sends immediately
   # (skips the "wait until 08:00" step below) and ignores the dedupe check,
   # so this doubles as the way to send yourself a test email on demand.
@@ -61,7 +61,7 @@ jobs:
           run=false
           if [ "${{ github.event_name }}" != "schedule" ]; then
             run=true
-          elif [ "$already_sent" = "false" ] && { [ "$berlin_hour" = "15" ] || [ "$berlin_hour" = "16" ] || [ "$berlin_hour" = "17" ]; }; then
+          elif [ "$already_sent" = "false" ] && { [ "$berlin_hour" = "16" ] || [ "$berlin_hour" = "17" ] || [ "$berlin_hour" = "18" ]; }; then
              run=true
           fi
 
@@ -117,18 +117,18 @@ jobs:
       # runs (workflow_dispatch) skip straight to sending. Retry slots that
       # already fire after 08:00 (08:45, 09:45) also skip the wait
       # automatically, since target_epoch is already in the past by then.
-      - name: Wait until 16:00 (Europe/Berlin)
+      - name: Wait until 16:10 (Europe/Berlin)
         if: steps.gate.outputs.run == 'true' && github.event_name == 'schedule'
         run: |
           today=$(TZ=Europe/Berlin date +%Y-%m-%d)
-          target_epoch=$(TZ=Europe/Berlin date -d "$today 16:00:00" +%s)
+          target_epoch=$(TZ=Europe/Berlin date -d "$today 16:10:00" +%s)
           now_epoch=$(date +%s)
           wait_seconds=$(( target_epoch - now_epoch ))
           if [ "$wait_seconds" -gt 0 ]; then
-            echo "Warte ${wait_seconds}s bis 16:00 Uhr (Europe/Berlin) …"
+            echo "Warte ${wait_seconds}s bis 16:10 Uhr (Europe/Berlin) …"
             sleep "$wait_seconds"
           else
-            echo "Bereits nach 16:00 Uhr (z.B. wegen Retry-Lauf) - sende sofort."
+            echo "Bereits nach 16:10 Uhr (z.B. wegen Retry-Lauf) - sende sofort."
           fi
 
       - name: Send briefing via email
