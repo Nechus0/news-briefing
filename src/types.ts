@@ -31,11 +31,11 @@ export interface NewsBrief {
 }
 
 export const CATEGORY_ORDER: CategoryId[] = [
-  'global-health',
+  'world-news',
   'german-politics',
   'ukraine-war',
   'middle-east-conflict',
-  'world-news',
+  'global-health',
 ];
 
 export const CATEGORY_LABELS: Record<CategoryId, string> = {
