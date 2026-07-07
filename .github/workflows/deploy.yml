@@ -1,17 +1,17 @@
 name: Generate & email daily briefing
 
 on:
-  # Runs every 10 minutes; the job step checks the current Berlin time and
-  # skips everything else unless it's ~07:50. Starting at 07:50 (not 08:00)
-  # leaves buffer for the Gemini retry logic (up to ~19 min worst case) so
-  # the email still goes out on time even if Google's API has a hiccup.
-  # Checking Berlin time at runtime (instead of a fixed UTC cron line) keeps
-  # this correct across the CEST/CET daylight-saving switch automatically -
+  # Fires once per hour at minute 45; the gate step below only lets it
+  # actually do anything when that's the 07:45 (Europe/Berlin) run. Checking
+  # Berlin time at runtime (instead of a fixed UTC cron line) keeps this
+  # correct across the CEST/CET daylight-saving switch automatically -
   # Germany's offset from UTC is always a whole number of hours, so minutes
   # always line up between UTC and Berlin time regardless of season.
   schedule:
-    - cron: '*/10 * * * *'
-  # Lets you trigger a run manually from the Actions tab (e.g. to test).
+    - cron: '45 * * * *'
+  # Lets you trigger a run manually from the Actions tab - sends immediately
+  # (skips the "wait until 08:00" step below), so this doubles as the way
+  # to send yourself a test email on demand.
   workflow_dispatch: {}
 
 permissions:
@@ -21,13 +21,12 @@ jobs:
   briefing:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if it's the 07:50 slot (Europe/Berlin)
+      - name: Check if it's the 07:45 slot (Europe/Berlin)
         id: gate
         run: |
           hour=$(TZ=Europe/Berlin date +%H)
-          minute=$(TZ=Europe/Berlin date +%M)
-          echo "Aktuelle Berlin-Zeit: $hour:$minute"
-          if [ "${{ github.event_name }}" != "schedule" ] || { [ "$hour" = "07" ] && [ "$minute" -ge "50" ]; }; then
+          echo "Aktuelle Berlin-Stunde: $hour"
+          if [ "${{ github.event_name }}" != "schedule" ] || [ "$hour" = "07" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
           else
             echo "run=false" >> "$GITHUB_OUTPUT"
@@ -54,45 +53,10 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: npm run generate
 
+      # Only the real 07:45 schedule waits for the 08:00 send time. Manual
+      # test runs (workflow_dispatch) skip straight to sending, so clicking
+      # "Run workflow" always gives you an immediate test email.
       - name: Wait until 08:00 (Europe/Berlin)
-        if: steps.gate.outputs.run == 'true'
+        if: steps.gate.outputs.run == 'true' && github.event_name == 'schedule'
         run: |
-          today=$(TZ=Europe/Berlin date +%Y-%m-%d)
-          target_epoch=$(TZ=Europe/Berlin date -d "$today 08:00:00" +%s)
-          now_epoch=$(date +%s)
-          wait_seconds=$(( target_epoch - now_epoch ))
-          if [ "$wait_seconds" -gt 0 ]; then
-            echo "Warte ${wait_seconds}s bis 08:00 Uhr (Europe/Berlin) …"
-            sleep "$wait_seconds"
-          else
-            echo "Bereits nach 08:00 Uhr (z.B. wegen Gemini-Retries) - sende sofort."
-          fi
-
-      - name: Send briefing via email
-        if: steps.gate.outputs.run == 'true'
-        env:
-          GMAIL_USER: ${{ secrets.GMAIL_USER }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        run: npm run send-email        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        if: steps.gate.outputs.run == 'true'
-        run: npm install
-
-      - name: Generate briefing via Gemini API
-        if: steps.gate.outputs.run == 'true'
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: npm run generate
-
-      - name: Send briefing via email
-        if: steps.gate.outputs.run == 'true'
-        env:
-          GMAIL_USER: ${{ secrets.GMAIL_USER }}
-          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
-          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
-        run: npm run send-email
+          to
