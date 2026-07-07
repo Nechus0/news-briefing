@@ -4,9 +4,9 @@
  * scripts/send-email.ts then reads to compose and send the daily email.
  *
  * Runs both locally ("npm run generate", reading GEMINI_API_KEY from
- * .env.local) and inside the GitHub Actions workflow once a day at 08:00
- * (Europe/Berlin) (GEMINI_API_KEY comes from a repo secret there - see
- * .github/workflows/deploy.yml).
+ * .env.local) and inside the GitHub Actions workflow, once a day around
+ * env.SEND_HOUR (Europe/Berlin) (GEMINI_API_KEY comes from a repo secret
+ * there - see .github/workflows/deploy.yml, which also sets SEND_HOUR).
  */
 import dotenv from 'dotenv';
 import fs from 'node:fs/promises';
@@ -67,8 +67,13 @@ function currentBerlinSlot(): { date: string; schedule: string; formattedDate: s
   const now = new Date();
   const berlinNow = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Berlin' }));
 
-  // Single daily edition, always the 08:00 (Europe/Berlin) run.
-  const schedule = '08:00';
+  // Reflects env.SEND_HOUR (see .github/workflows/deploy.yml) so the slot
+  // shown in the briefing/email always matches the actually configured send
+  // time, instead of drifting out of sync when that value is changed (e.g.
+  // for a one-off test at a different hour). Defaults to 8 for local runs
+  // where SEND_HOUR isn't set.
+  const sendHour = Number(process.env.SEND_HOUR ?? '8');
+  const schedule = `${String(sendHour).padStart(2, '0')}:00`;
 
   const yyyy = berlinNow.getFullYear();
   const mm = String(berlinNow.getMonth() + 1).padStart(2, '0');
@@ -89,51 +94,119 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function isTransientError(err: unknown): boolean {
+/** Thrown by parseModelJson() when no amount of cleanup could turn the
+ * model's response into valid JSON. Distinguished from a generic Error so
+ * withRetry() can tell "worth retrying with a fresh generation" apart from
+ * a genuinely fatal error (e.g. a bad API key). */
+class ModelJsonParseError extends Error {}
+
+function isTransientApiError(err: unknown): boolean {
   const status = (err as { status?: number })?.status;
   return status === 503 || status === 429;
 }
 
-/** Retries transient Gemini API errors (503 "overloaded", 429 rate limit)
- * every 5 minutes, up to 4 attempts total. The workflow starts at 07:45
- * (Europe/Berlin), so the worst case (3 retries) lands exactly at 08:00 -
- * right when the email is due anyway. */
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  attempts = 4,
-  delaysMs = [300_000, 300_000, 300_000],
-): Promise<T> {
+function isRetryable(err: unknown): boolean {
+  return err instanceof ModelJsonParseError || isTransientApiError(err);
+}
+
+/** Transient API errors (503 "overloaded", 429 rate limit) get a 5 minute
+ * backoff, matching Gemini's typical recovery time. A ModelJsonParseError
+ * isn't a server-side problem - it's just an unlucky single generation - so
+ * it gets a short 10s pause and then a completely fresh API call, since
+ * generation isn't deterministic and a retry has a good chance of producing
+ * valid JSON the model failed to on this attempt. */
+function retryDelayMs(err: unknown): number {
+  return err instanceof ModelJsonParseError ? 10_000 : 300_000;
+}
+
+/** Retries retryable failures (see isRetryable) up to `attempts` times
+ * total. The workflow starts 15 minutes before env.SEND_HOUR:00
+ * (Europe/Berlin), so even the slower transient-error backoff (3 retries a
+ * 5 minutes) lands close to when the email is due anyway. */
+async function withRetry<T>(fn: () => Promise<T>, attempts = 4): Promise<T> {
   for (let attempt = 1; attempt <= attempts; attempt++) {
     try {
       return await fn();
     } catch (err) {
       const isLastAttempt = attempt === attempts;
-      if (isLastAttempt || !isTransientError(err)) throw err;
-      const delay = delaysMs[attempt - 1] ?? delaysMs[delaysMs.length - 1];
-      console.warn(`Gemini-API vorübergehend nicht verfügbar (Versuch ${attempt}/${attempts}), erneuter Versuch in ${delay / 1000}s …`);
+      if (isLastAttempt || !isRetryable(err)) throw err;
+      const delay = retryDelayMs(err);
+      const reason = err instanceof ModelJsonParseError ? 'ungültiges JSON' : 'Gemini-API vorübergehend nicht verfügbar';
+      console.warn(`${reason} (Versuch ${attempt}/${attempts}), erneuter Versuch in ${delay / 1000}s …`);
       await sleep(delay);
     }
   }
   throw new Error('unreachable');
 }
 
+/** JSON.parse fails on raw (unescaped) control characters inside a string
+ * literal - insignificant whitespace between tokens is fine, but Gemini
+ * occasionally emits a literal newline inside a "brief" value instead of
+ * the escaped "\n", which otherwise looks like well-formed JSON right up
+ * until JSON.parse rejects it. This walks the text tracking whether we're
+ * inside a string (respecting existing escape sequences) and escapes any
+ * raw control character it finds there. */
+function escapeRawControlCharsInStrings(text: string): string {
+  let result = '';
+  let inString = false;
+  let escaped = false;
+
+  for (const ch of text) {
+    if (inString) {
+      if (escaped) {
+        result += ch;
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\') {
+        result += ch;
+        escaped = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = false;
+        result += ch;
+        continue;
+      }
+      const code = ch.charCodeAt(0);
+      if (code < 0x20) {
+        if (ch === '\n') result += '\\n';
+        else if (ch === '\r') result += '\\r';
+        else if (ch === '\t') result += '\\t';
+        else result += `\\u${code.toString(16).padStart(4, '0')}`;
+        continue;
+      }
+      result += ch;
+    } else {
+      if (ch === '"') inString = true;
+      result += ch;
+    }
+  }
+
+  return result;
+}
+
 /** Parses the model's JSON response defensively: strips markdown code
  * fences some models wrap JSON in despite responseMimeType/responseSchema,
- * and falls back to extracting the outermost {...} block if direct parsing
- * fails. On failure, logs the full raw response (not just the few-char
- * snippet JSON.parse's own error gives you) so a bad response is actually
- * debuggable from the Actions log instead of a guessing game. */
+ * falls back to extracting the outermost {...} block, and additionally
+ * tries escaping raw control characters found inside string literals (see
+ * escapeRawControlCharsInStrings) on every candidate. On failure, logs the
+ * full raw response (not just the few-char snippet JSON.parse's own error
+ * gives you) so a bad response is actually debuggable from the Actions log
+ * instead of a guessing game. */
 function parseModelJson(rawText: string): any {
   const text = rawText.trim();
 
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  const candidates = [text, fenced?.[1]?.trim()].filter(Boolean) as string[];
+  const baseCandidates = [text, fenced?.[1]?.trim()].filter(Boolean) as string[];
 
   const firstBrace = text.indexOf('{');
   const lastBrace = text.lastIndexOf('}');
   if (firstBrace !== -1 && lastBrace > firstBrace) {
-    candidates.push(text.slice(firstBrace, lastBrace + 1));
+    baseCandidates.push(text.slice(firstBrace, lastBrace + 1));
   }
+
+  const candidates = baseCandidates.flatMap((c) => [c, escapeRawControlCharsInStrings(c)]);
 
   for (const candidate of candidates) {
     try {
@@ -145,7 +218,7 @@ function parseModelJson(rawText: string): any {
 
   console.error('Konnte die Modellantwort nicht als JSON parsen. Vollständige Rohantwort:');
   console.error(rawText);
-  throw new Error('Modellantwort war kein valides JSON (siehe Rohantwort oben im Log).');
+  throw new ModelJsonParseError('Modellantwort war kein valides JSON (siehe Rohantwort oben im Log).');
 }
 
 /** Liest die zuletzt committete Ausgabe aus dem bereits ausgecheckten Repo
@@ -235,8 +308,13 @@ async function generate(): Promise<NewsBrief> {
 
   const ai = new GoogleGenAI({ apiKey });
 
-  const response = await withRetry(() =>
-    ai.models.generateContent({
+  // The whole generate-and-parse round trip is retried together (not just
+  // the API call): a ModelJsonParseError means this specific generation came
+  // back malformed, and since Gemini generation isn't deterministic, a fresh
+  // call is the actual fix - re-parsing the same broken text would just fail
+  // the same way again.
+  const parsed = await withRetry(async () => {
+    const response = await ai.models.generateContent({
       model: MODEL,
       contents: buildPrompt(date, schedule, previous),
       config: {
@@ -281,13 +359,13 @@ async function generate(): Promise<NewsBrief> {
           required: ['executiveSummary', 'categories'],
         },
       },
-    }),
-  );
+    });
 
-  const text = response.text;
-  if (!text) throw new Error('Leere Antwort von Gemini erhalten.');
+    const text = response.text;
+    if (!text) throw new Error('Leere Antwort von Gemini erhalten.');
+    return parseModelJson(text);
+  });
 
-  const parsed = parseModelJson(text);
   const foundCategories: any[] = parsed.categories ?? [];
 
   const finalCategories = CATEGORY_IDS.map((id) => {
