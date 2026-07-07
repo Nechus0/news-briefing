@@ -1,40 +1,81 @@
 name: Generate & email daily briefing
 
 on:
-  # Fires once per hour at minute 45; the gate step below only lets it
-  # actually do anything when that's the 07:45 (Europe/Berlin) run. Checking
-  # Berlin time at runtime (instead of a fixed UTC cron line) keeps this
-  # correct across the CEST/CET daylight-saving switch automatically -
-  # Germany's offset from UTC is always a whole number of hours, so minutes
-  # always line up between UTC and Berlin time regardless of season.
+  # Fires once per hour at minute 45. Checking Berlin time at runtime (instead
+  # of a fixed UTC cron line) keeps this correct across the CEST/CET
+  # daylight-saving switch automatically - Germany's offset from UTC is
+  # always a whole number of hours, so minutes always line up between UTC and
+  # Berlin time regardless of season.
+  #
+  # The gate step below allows the run to actually do work during the Berlin
+  # hours 07, 08 and 09 (not just exactly 07) as long as today's briefing
+  # hasn't been sent yet. This makes the send resilient to two real failure
+  # modes that used to cause a silently skipped morning briefing:
+  #  1) GitHub's scheduled triggers are not guaranteed to fire on time - a
+  #     delayed run that starts after 08:00 used to fall outside the old
+  #     exact "hour == 07" check and would just no-op.
+  #  2) A transient failure (e.g. the Gemini API step failing) used to mean
+  #     no briefing that day at all, since there was only a single attempt.
+  #     Now the 08:45 and 09:45 runs act as automatic retries.
   schedule:
     - cron: '45 * * * *'
   # Lets you trigger a run manually from the Actions tab - sends immediately
-  # (skips the "wait until 08:00" step below), so this doubles as the way
-  # to send yourself a test email on demand.
+  # (skips the "wait until 08:00" step below) and ignores the dedupe check,
+  # so this doubles as the way to send yourself a test email on demand.
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+# Scheduled runs are an hour apart and each finishes in well under an hour,
+# but a manual workflow_dispatch could overlap with one. Serialize instead of
+# cancelling so the dedupe marker is always read/written from a consistent
+# state instead of two runs racing each other.
+concurrency:
+  group: news-briefing
+  cancel-in-progress: false
+
 jobs:
   briefing:
     runs-on: ubuntu-latest
     steps:
-      - name: Check if it's the 07:45 slot (Europe/Berlin)
+      # Checkout happens unconditionally (and first) because the gate step
+      # needs to read public/data/last-sent-date.txt from the repo to know
+      # whether today's briefing already went out.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check send window & dedupe (Europe/Berlin)
         id: gate
         run: |
-          hour=$(TZ=Europe/Berlin date +%H)
-          echo "Aktuelle Berlin-Stunde: $hour"
-          if [ "${{ github.event_name }}" != "schedule" ] || [ "$hour" = "07" ]; then
-            echo "run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=false" >> "$GITHUB_OUTPUT"
+          berlin_hour=$(TZ=Europe/Berlin date +%H)
+          today=$(TZ=Europe/Berlin date +%Y-%m-%d)
+          echo "Aktuelle Berlin-Stunde: $berlin_hour ($today)"
+
+          already_sent=false
+          if [ -f public/data/last-sent-date.txt ] && [ "$(cat public/data/last-sent-date.txt)" = "$today" ]; then
+            already_sent=true
+          fi
+          echo "Heute bereits versendet: $already_sent"
+
+          run=false
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            run=true
+          elif [ "$already_sent" = "false" ] && { [ "$berlin_hour" = "07" ] || [ "$berlin_hour" = "08" ] || [ "$berlin_hour" = "09" ]; }; then
+            run=true
           fi
 
-      - name: Checkout
-        if: steps.gate.outputs.run == 'true'
-        uses: actions/checkout@v4
+          # Last of the three retry slots (09:45) - if we still haven't sent
+          # anything by then, something is persistently broken and it's worth
+          # emailing a failure notice instead of staying silent.
+          last_attempt=false
+          if [ "$berlin_hour" = "09" ]; then
+            last_attempt=true
+          fi
+
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+          echo "last_attempt=$last_attempt" >> "$GITHUB_OUTPUT"
+          echo "today=$today" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node
         if: steps.gate.outputs.run == 'true'
@@ -68,12 +109,14 @@ jobs:
             echo "Keine Änderungen an den Briefing-Daten."
           else
             git commit -m "Aktualisiere Briefing-Daten ($(TZ=Europe/Berlin date '+%Y-%m-%d %H:%M')) [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
             git push
           fi
 
-      # Only the real 07:45 schedule waits for the 08:00 send time. Manual
-      # test runs (workflow_dispatch) skip straight to sending, so clicking
-      # "Run workflow" always gives you an immediate test email.
+      # Only the real schedule waits for the 08:00 send time. Manual test
+      # runs (workflow_dispatch) skip straight to sending. Retry slots that
+      # already fire after 08:00 (08:45, 09:45) also skip the wait
+      # automatically, since target_epoch is already in the past by then.
       - name: Wait until 08:00 (Europe/Berlin)
         if: steps.gate.outputs.run == 'true' && github.event_name == 'schedule'
         run: |
@@ -85,7 +128,7 @@ jobs:
             echo "Warte ${wait_seconds}s bis 08:00 Uhr (Europe/Berlin) …"
             sleep "$wait_seconds"
           else
-            echo "Bereits nach 08:00 Uhr (z.B. wegen Gemini-Retries) - sende sofort."
+            echo "Bereits nach 08:00 Uhr (z.B. wegen Retry-Lauf) - sende sofort."
           fi
 
       - name: Send briefing via email
@@ -95,3 +138,33 @@ jobs:
           GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
         run: npm run send-email
+
+      # Marks today as done so the 08:45/09:45 retry slots (and any stray
+      # re-run) don't send a second copy once one has gone out successfully.
+      # Only scheduled runs write the marker - manual workflow_dispatch stays
+      # a pure test/on-demand send and must never block the real morning run.
+      - name: Mark today's briefing as sent
+        if: steps.gate.outputs.run == 'true' && github.event_name == 'schedule'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo -n "${{ steps.gate.outputs.today }}" > public/data/last-sent-date.txt
+          git add public/data/last-sent-date.txt
+          if git diff --staged --quiet; then
+            echo "Marker war schon aktuell."
+          else
+            git commit -m "Markiere Briefing als versendet (${{ steps.gate.outputs.today }}) [skip ci]"
+            git pull --rebase origin "${GITHUB_REF_NAME}"
+            git push
+          fi
+
+      # Last-resort safety net: if we reached the final retry slot (09:45)
+      # and any step above still failed, email a short failure notice instead
+      # of the morning staying silent with no signal anything went wrong.
+      - name: Notify on failure (last retry of the day)
+        if: failure() && steps.gate.outputs.run == 'true' && steps.gate.outputs.last_attempt == 'true'
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
+        run: npm run notify-failure
