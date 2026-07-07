@@ -47,7 +47,21 @@ const PREFERRED_SOURCES = [
   'New York Times (nytimes.com)',
   'Der Spiegel (spiegel.de)',
   'CNN (cnn.com)',
+  'Le Monde (lemonde.fr)',
+  'WHO (who.int)',
+  'Health Policy Watch (healthpolicy-watch.news)',
 ];
+
+// Pro Kategorie ein paar naheliegende Beispielquellen aus der Liste oben,
+// damit sich das Modell nicht auf eine einzelne Publikation einschießt
+// (in der Praxis kam sonst überproportional viel Al Jazeera vor).
+const CATEGORY_SOURCE_HINTS: Record<CategoryId, string> = {
+  'world-news': 'z.B. BBC, CNN, New York Times, Le Monde',
+  'german-politics': 'z.B. Tagesschau, Die Zeit, Der Spiegel',
+  'ukraine-war': 'z.B. BBC, New York Times, Die Zeit, Tagesschau',
+  'middle-east-conflict': 'z.B. BBC, New York Times, Die Zeit, Al Jazeera',
+  'global-health': 'z.B. WHO, Health Policy Watch, New York Times',
+};
 
 function currentBerlinSlot(): { date: string; schedule: string; formattedDate: string } {
   const now = new Date();
@@ -134,7 +148,37 @@ function parseModelJson(rawText: string): any {
   throw new Error('Modellantwort war kein valides JSON (siehe Rohantwort oben im Log).');
 }
 
-function buildPrompt(date: string, schedule: string): string {
+/** Liest die zuletzt committete Ausgabe aus dem bereits ausgecheckten Repo
+ * (kein Netzwerk-Fetch nötig, da der Workflow sie nach jedem Lauf zurück
+ * committet - siehe .github/workflows/deploy.yml). Gibt null zurück beim
+ * allerersten Lauf oder falls die Datei aus irgendeinem Grund fehlt. */
+async function loadPreviousEdition(): Promise<NewsBrief | null> {
+  try {
+    const raw = await fs.readFile(OUTPUT_PATH, 'utf8');
+    return JSON.parse(raw) as NewsBrief;
+  } catch {
+    return null;
+  }
+}
+
+function buildPrompt(date: string, schedule: string, previous: NewsBrief | null): string {
+  const previousContext = previous
+    ? `Vorherige Ausgabe (${previous.formattedDate}, ${previous.schedule} Uhr) zur Einordnung, was bereits
+berichtet wurde:
+${JSON.stringify(
+  {
+    executiveSummary: previous.executiveSummary,
+    categories: previous.categories?.map((c) => ({ id: c.id, headline: c.headline, brief: c.brief })),
+  },
+  null,
+  2,
+)}
+Wiederhole diese Inhalte nicht unverändert. Arbeite pro Kategorie heraus, was sich seitdem NEU
+entwickelt hat. Falls eine Story weiterläuft, aber es keine wesentliche neue Entwicklung gibt, sage
+das kurz und ehrlich (z.B. "keine wesentliche Änderung seit der letzten Ausgabe") statt den alten
+Stand erneut ausführlich zu wiederholen.`
+    : 'Es gibt noch keine vorherige Ausgabe (erster Lauf) - erstelle das Briefing unabhängig davon.';
+
   return `
 Generiere eine umfassende, hochprofessionelle tägliche Nachrichtenzusammenfassung vollständig in
 deutscher Sprache für das Datum ${date}, Update-Slot ${schedule} Uhr (Europe/Berlin).
@@ -142,19 +186,29 @@ deutscher Sprache für das Datum ${date}, Update-Slot ${schedule} Uhr (Europe/Be
 Nutze Google Search, um aktuelle, echte Nachrichten zu recherchieren. Bevorzuge dabei explizit
 diese Quellen, wenn sie zum Thema passende Berichterstattung haben (nutze ihre Original-URLs):
 ${PREFERRED_SOURCES.map((s) => `- ${s}`).join('\n')}
-Andere seriöse Quellen sind erlaubt, falls diese sieben zu einem Thema nichts Passendes berichten.
+Andere seriöse Quellen sind erlaubt, falls diese zu einem Thema nichts Passendes berichten.
 
-Du musst genau diese fünf Kategorien abdecken (deutsche Bezeichnung in Klammern):
-1. world-news (Weltnachrichten): wichtige globale Entwicklungen, Geopolitik, internationale Abkommen.
+Wichtig zur Quellenvielfalt: Verteile die Quellen über die fünf Kategorien hinweg möglichst
+unterschiedlich. Verlasse dich nicht wiederholt primär auf dieselbe Publikation (insbesondere
+nicht auf Al Jazeera für mehrere Kategorien gleichzeitig) - das Ziel ist eine ausgewogene Mischung
+über den ganzen Tag, nicht die Dominanz einer einzelnen Quelle.
+
+Du musst genau diese fünf Kategorien abdecken (deutsche Bezeichnung in Klammern, dahinter
+naheliegende Beispielquellen für diese Kategorie):
+1. world-news (Weltnachrichten): wichtige globale Entwicklungen, Geopolitik, internationale
+   Abkommen. ${CATEGORY_SOURCE_HINTS['world-news']}
 2. german-politics (Bundespolitik Deutschland): Bundestag, Regierungskoalition, Gesetzesvorhaben.
+   ${CATEGORY_SOURCE_HINTS['german-politics']}
 3. ukraine-war (Krieg in der Ukraine): militärische Lage, Diplomatie, humanitäre Lage.
+   ${CATEGORY_SOURCE_HINTS['ukraine-war']}
 4. middle-east-conflict (Nahost-Konflikt): Gaza, Israel, Libanon, regionale Entwicklungen.
+   ${CATEGORY_SOURCE_HINTS['middle-east-conflict']}
 5. global-health (Globale Gesundheit): Ausbrüche, WHO-Meldungen, Pandemien, Gesundheitspolitik.
+   ${CATEGORY_SOURCE_HINTS['global-health']}
 
 Pro Kategorie:
 - headline: prägnante, professionelle Schlagzeile auf Deutsch (max. 15 Wörter).
 - brief: sachlicher, informativer Bericht auf Deutsch (4-6 Sätze, konkrete Zahlen/Fakten wo vorhanden).
-- whyRelevant: ein Satz (max. 20 Wörter), der die Relevanz einordnet.
 - sources: 1-3 echte Quellen (title = Name des Mediums, url = direkte echte Artikel-URL). Erfinde
   niemals URLs. Wenn du zu einer Kategorie nichts Verlässliches findest, sage das ehrlich in
   "brief" statt eine Nachricht zu erfinden.
@@ -162,6 +216,8 @@ Pro Kategorie:
 executiveSummary: exakt 5 kurze, eigenständige Sätze (kein Markdown, keine Aufzählungszeichen -
 das Frontend fügt die Bullet-Punkte selbst hinzu), einer pro Kategorie, in der Reihenfolge
 Weltnachrichten, Bundespolitik Deutschland, Krieg in der Ukraine, Nahost-Konflikt, Globale Gesundheit.
+
+${previousContext}
 `.trim();
 }
 
@@ -175,13 +231,14 @@ async function generate(): Promise<NewsBrief> {
   }
 
   const { date, schedule, formattedDate } = currentBerlinSlot();
+  const previous = await loadPreviousEdition();
 
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await withRetry(() =>
     ai.models.generateContent({
       model: MODEL,
-      contents: buildPrompt(date, schedule),
+      contents: buildPrompt(date, schedule, previous),
       config: {
         tools: [{ googleSearch: {} }],
         responseMimeType: 'application/json',
@@ -205,7 +262,6 @@ async function generate(): Promise<NewsBrief> {
                   name: { type: Type.STRING },
                   headline: { type: Type.STRING },
                   brief: { type: Type.STRING },
-                  whyRelevant: { type: Type.STRING },
                   sources: {
                     type: Type.ARRAY,
                     items: {
@@ -218,7 +274,7 @@ async function generate(): Promise<NewsBrief> {
                     },
                   },
                 },
-                required: ['id', 'name', 'headline', 'brief', 'whyRelevant', 'sources'],
+                required: ['id', 'name', 'headline', 'brief', 'sources'],
               },
             },
           },
@@ -243,7 +299,6 @@ async function generate(): Promise<NewsBrief> {
       name: CATEGORY_NAMES[id],
       headline: 'Keine wesentlichen neuen Entwicklungen erfasst.',
       brief: 'Für diese Kategorie konnten in diesem Durchlauf keine verlässlichen aktuellen Meldungen ermittelt werden.',
-      whyRelevant: '',
       sources: [],
     };
   });
