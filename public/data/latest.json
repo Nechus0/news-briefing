@@ -1,56 +1,95 @@
 {
-  "id": "seed",
-  "timestamp": "2026-07-06T08:00:00.000Z",
-  "formattedDate": "Beispiel-Ausgabe (wird nach dem ersten automatischen Lauf ersetzt)",
+  "id": "2026-07-07-08:00",
+  "timestamp": "2026-07-07T01:27:10.959Z",
+  "formattedDate": "Dienstag, 7. Juli 2026",
   "schedule": "08:00",
-  "isSimulated": true,
   "executiveSummary": [
-    "Dies ist eine Platzhalter-Ausgabe. Sobald der GitHub-Actions-Workflow zum ersten Mal erfolgreich läuft, wird diese Datei automatisch durch echte, aktuelle Inhalte ersetzt.",
-    "Bundespolitik Deutschland: Platzhalter.",
-    "Globale Gesundheit: Platzhalter.",
-    "Krieg in der Ukraine: Platzhalter.",
-    "Nahost-Konflikt: Platzhalter."
+    "Vor dem bevorstehenden NATO-Gipfel in Ankara verteidigen die europäischen Mitgliedstaaten selbstbewusst ihre gestiegenen Verteidigungsausgaben gegen Forderungen von US-Präsident Donald Trump.",
+    "Bundeskanzler Friedrich Merz musste sich in einer lebhaften Fragestunde im Bundestag für den Haushaltsplan 2026 und die geplante Wiedereinführung einer Teilwehrpflicht rechtfertigen.",
+    "Russland hat am Vorabend des NATO-Gipfels schwere Raketenangriffe auf den Großraum Kiew geflogen, was den ukrainischen Präsidenten Selenskyj zu erneuten Bitten um weitreichende Flugabwehrsysteme veranlasste.",
+    "Die Hamas kündigte die Auflösung ihrer Regierungsbehörden im Gazastreifen an, um die geplante Übergabe an eine technokratische Übergangsverwaltung im Rahmen eines Waffenstillstandsabkommens zu ermöglichen.",
+    "Die Weltgesundheitsorganisation hat in der Demokratischen Republik Kongo klinische Studien zur Behandlung des tödlichen Ebola-Bundibugyo-Virus gestartet und parallel einen Hantavirus-Ausbruch auf einem Kreuzfahrtschiff für beendet erklärt."
   ],
   "categories": [
     {
       "id": "world-news",
       "name": "Weltnachrichten",
-      "headline": "Beispiel-Schlagzeile aus dem Weltgeschehen",
-      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
-      "whyRelevant": "Platzhalter.",
-      "sources": [{ "title": "CNN", "url": "https://edition.cnn.com/" }]
+      "headline": "Europa kontert Kritik Trumps an Verteidigungsausgaben vor NATO-Gipfel in Ankara",
+      "brief": "Im Vorfeld des NATO-Gipfels in Ankara haben die europäischen Bündnispartner und Kanada ihre militärischen Investitionen gegen anhaltende Kritik verteidigt. US-Präsident Donald Trump hatte die bisherigen Beiträge der Alliierten abermals als unzureichend bezeichnet und höhere Zielmarken gefordert. Bundeskanzler Friedrich Merz sowie der künftige NATO-Generalsekretär Mark Rutte verwiesen darauf, dass die europäischen Investitionen in den vergangenen Monaten signifikant gestiegen seien. Diplomatische Kreise erwarten intensive Debatten in der türkischen Hauptstadt, während das Bündnis offiziell Geschlossenheit signalisieren will.",
+      "sources": [
+        {
+          "title": "Tagesschau",
+          "url": "https://www.tagesschau.de/ausland/europa/"
+        },
+        {
+          "title": "CNN",
+          "url": "https://edition.cnn.com/world/europe"
+        }
+      ]
     },
     {
       "id": "german-politics",
       "name": "Bundespolitik Deutschland",
-      "headline": "Beispiel-Schlagzeile zur deutschen Bundespolitik",
-      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
-      "whyRelevant": "Platzhalter.",
-      "sources": [{ "title": "Tagesschau", "url": "https://www.tagesschau.de/" }]
-    },
-    {
-      "id": "global-health",
-      "name": "Globale Gesundheit",
-      "headline": "Beispiel-Schlagzeile zur globalen Gesundheit",
-      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
-      "whyRelevant": "Platzhalter.",
-      "sources": [{ "title": "WHO", "url": "https://www.who.int/" }]
+      "headline": "Bundeskanzler Merz stellt sich im Bundestag der Kritik an Haushaltsplänen und Wehrpflicht",
+      "brief": "Bundeskanzler Friedrich Merz hat sich in einer live übertragenen Fragestunde im Bundestag den Fragen und Vorwürfen der Parlamentarier gestellt. Im Zentrum der Kontroversen standen vor allem der umstrittene Bundeshaushalt 2026 sowie die Pläne zur Modernisierung und hybriden Wiedereinführung der Wehrpflicht. Während Teile der Jugend auf der Straße gegen mögliche Zwangsrekrutierungen protestieren, verteidigte Verteidigungsminister Boris Pistorius die Maßnahmen als essenziell für die NATO-Verpflichtungen Deutschlands. Die Regierung betonte, dass angesichts der angespannten Sicherheitslage in Europa keine Alternative zu den drastischen Einschnitten bestehe.",
+      "sources": [
+        {
+          "title": "Die Zeit",
+          "url": "https://www.zeit.de/politik/deutschland/"
+        },
+        {
+          "title": "Der Spiegel",
+          "url": "https://www.spiegel.de/politik/deutschland/"
+        }
+      ]
     },
     {
       "id": "ukraine-war",
       "name": "Krieg in der Ukraine",
-      "headline": "Beispiel-Schlagzeile zum Krieg in der Ukraine",
-      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
-      "whyRelevant": "Platzhalter.",
-      "sources": [{ "title": "BBC", "url": "https://www.bbc.com/news" }]
+      "headline": "Mehr als 20 Tote bei schweren russischen Angriffen auf Kiew vor NATO-Gipfel",
+      "brief": "Die ukrainische Hauptstadt Kiew und ihr Umland sind Ziel einer der schwersten russischen Angriffswellen der jüngeren Zeit geworden. Durch Raketen- und Drohnenbeschuss kamen ersten Berichten zufolge mindestens 26 Menschen ums Leben, Dutzende weitere wurden verletzt. Der ukrainische Präsident Wolodymyr Selenskyj beklagte angesichts der Angriffe die unzureichende Ausstattung seiner Streitkräfte mit Patriot-Abfangraketen. Das Timing der Bombardements kurz vor Beginn des NATO-Gipfels wird als gezielte Machtdemonstration Moskaus gegenüber dem westlichen Bündnis gewertet.",
+      "sources": [
+        {
+          "title": "BBC News",
+          "url": "https://www.bbc.com/news/world-europe"
+        },
+        {
+          "title": "The Guardian",
+          "url": "https://www.theguardian.com/world/ukraine"
+        }
+      ]
     },
     {
       "id": "middle-east-conflict",
       "name": "Nahost-Konflikt",
-      "headline": "Beispiel-Schlagzeile zum Nahost-Konflikt",
-      "brief": "Platzhaltertext. Nach dem ersten erfolgreichen Workflow-Lauf erscheint hier eine echte, aktuelle Zusammenfassung mit Quellenangaben.",
-      "whyRelevant": "Platzhalter.",
-      "sources": [{ "title": "Al Jazeera", "url": "https://www.aljazeera.com/" }]
+      "headline": "Hamas löst Gaza-Regierungskomitee im Zuge der Waffenstillstands-Umsetzung auf",
+      "brief": "Die Hamas hat die sofortige Auflösung ihres Verwaltungskomitees im Gazastreifen bekanntgegeben. Dieser Schritt soll den Weg für das sogenannte Nationale Komitee für die Verwaltung von Gaza (NCAG) ebnen, ein von US-Diplomaten unterstütztes Gremium zur Nachkriegsorganisation. Ein Sprecher der Organisation betonte, man komme damit den Verpflichtungen eines umfassenden Waffenstillstands nach. Die Entwaffnung der Milizen bleibt jedoch der zentrale Streitpunkt in den Verhandlungen, da Israel ohne diesen Schritt eine Übernahme durch die Technokraten-Verwaltung ablehnt.",
+      "sources": [
+        {
+          "title": "Al Jazeera",
+          "url": "https://www.aljazeera.com/middle-east/"
+        },
+        {
+          "title": "Middle East Eye",
+          "url": "https://www.middleeasteye.net/news/hamas-decision-dissolve-gaza-government-nod-trump-expert-says"
+        }
+      ]
+    },
+    {
+      "id": "global-health",
+      "name": "Globale Gesundheit",
+      "headline": "WHO testet Ebola-Therapien im Kongo und erklärt Hantavirus-Ausbruch für beendet",
+      "brief": "Die Weltgesundheitsorganisation hat angesichts einer eskalierenden Ebola-Epidemie in der Demokratischen Republik Kongo klinische Studien für zwei neue Therapien gestartet. Mehr als 500 Menschen sind dort bereits an dem seltenen Bundibugyo-Virenstamm gestorben. Gute Nachrichten gab es hingegen in Bezug auf einen rätselhaften Ausbruch von Hantaviren an Bord des Kreuzfahrtschiffes 'Hondius', den WHO-Chef Tedros Adhanom Ghebreyesus nun für offiziell beendet erklärte. Das Geschehen forderte insgesamt drei Todesopfer bei weltweit 13 gemeldeten Infektionen und zog eine umfangreiche globale Kontaktverfolgung nach sich.",
+      "sources": [
+        {
+          "title": "WHO News",
+          "url": "https://www.who.int/news"
+        },
+        {
+          "title": "Deutsches Ärzteblatt",
+          "url": "https://www.aerzteblatt.de/nachrichten/"
+        }
+      ]
     }
   ]
 }
