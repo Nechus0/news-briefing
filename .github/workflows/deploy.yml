@@ -38,7 +38,7 @@ env:
   #
   # TEMPORARILY SET TO 17 FOR TESTING - set back to 8 for the real daily
   # 08:00 edition once the test is done.
-  SEND_HOUR: '17'
+  SEND_HOUR: '08'
 
 # Scheduled runs are an hour apart and each finishes in well under an hour,
 # but a manual workflow_dispatch could overlap with one. Serialize instead of
