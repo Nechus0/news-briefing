@@ -21,7 +21,7 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 dotenv.config({ path: path.join(__dirname, '..', '.env.local'), override: true });
 
 const OUTPUT_PATH = path.join(__dirname, '..', 'public', 'data', 'latest.json');
-const MODEL = 'gemini-3.5-flash';
+const MODEL = 'gemini-3.1-pro-preview';
 
 const CATEGORY_IDS: CategoryId[] = [
   'world-news',
@@ -101,6 +101,37 @@ async function withRetry<T>(
     }
   }
   throw new Error('unreachable');
+}
+
+/** Parses the model's JSON response defensively: strips markdown code
+ * fences some models wrap JSON in despite responseMimeType/responseSchema,
+ * and falls back to extracting the outermost {...} block if direct parsing
+ * fails. On failure, logs the full raw response (not just the few-char
+ * snippet JSON.parse's own error gives you) so a bad response is actually
+ * debuggable from the Actions log instead of a guessing game. */
+function parseModelJson(rawText: string): any {
+  const text = rawText.trim();
+
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const candidates = [text, fenced?.[1]?.trim()].filter(Boolean) as string[];
+
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    candidates.push(text.slice(firstBrace, lastBrace + 1));
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return JSON.parse(candidate);
+    } catch {
+      // try next candidate
+    }
+  }
+
+  console.error('Konnte die Modellantwort nicht als JSON parsen. Vollständige Rohantwort:');
+  console.error(rawText);
+  throw new Error('Modellantwort war kein valides JSON (siehe Rohantwort oben im Log).');
 }
 
 function buildPrompt(date: string, schedule: string): string {
@@ -200,7 +231,7 @@ async function generate(): Promise<NewsBrief> {
   const text = response.text;
   if (!text) throw new Error('Leere Antwort von Gemini erhalten.');
 
-  const parsed = JSON.parse(text.trim());
+  const parsed = parseModelJson(text);
   const foundCategories: any[] = parsed.categories ?? [];
 
   const finalCategories = CATEGORY_IDS.map((id) => {
