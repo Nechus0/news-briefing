@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'motion/react';
-import { ExternalLink, RefreshCw, Clock, WifiOff } from 'lucide-react';
+import { ExternalLink, RefreshCw, Clock, WifiOff, CalendarDays, Droplets } from 'lucide-react';
 import { NewsBrief } from './types';
 import { CATEGORY_ORDER, CATEGORY_LABELS, CATEGORY_COLORS } from './types';
 import { demoBrief } from './mockData';
@@ -114,6 +114,54 @@ export default function App() {
           )}
         </header>
 
+        {(brief.weather || brief.calendar) && (
+          <div className="grid sm:grid-cols-2 gap-3 mb-6">
+            {brief.weather && (
+              <a
+                href={brief.weather.sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-2xl bg-[#15151d] border border-white/10 p-4 flex items-center gap-3 hover:bg-[#1b1b25] transition"
+              >
+                <span className="text-3xl leading-none">{brief.weather.icon}</span>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold tracking-wide uppercase text-zinc-500 mb-0.5">
+                    Wetter · Berlin
+                  </p>
+                  <p className="text-sm font-semibold text-white">
+                    {brief.weather.tempMinC}° – {brief.weather.tempMaxC}°C · {brief.weather.description}
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-0.5 flex items-center gap-1">
+                    <Droplets size={12} /> {brief.weather.precipitationProbability}% Regenwahrscheinlichkeit
+                  </p>
+                </div>
+              </a>
+            )}
+            {brief.calendar && (
+              <div className="rounded-2xl bg-[#15151d] border border-white/10 p-4">
+                <p className="text-[11px] font-semibold tracking-wide uppercase text-zinc-500 mb-2 flex items-center gap-1.5">
+                  <CalendarDays size={13} /> Termine heute
+                </p>
+                {brief.calendar.length === 0 ? (
+                  <p className="text-sm text-zinc-400">Keine Termine heute 🎉</p>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {brief.calendar.map((e, i) => (
+                      <li key={i} className="text-sm text-zinc-200 flex gap-2">
+                        <span className="font-semibold text-zinc-400 shrink-0">{e.time}</span>
+                        <span className="truncate">
+                          {e.title}
+                          {e.location && <span className="text-zinc-500"> · {e.location}</span>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         <motion.section
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -149,6 +197,7 @@ export default function App() {
                 <span
                   className={`inline-block text-[11px] font-semibold tracking-wide uppercase px-2.5 py-1 rounded-full ${colors.chip} mb-3`}
                 >
+                  {catId === 'feel-good-news' ? '✨ ' : ''}
                   {cat.name || CATEGORY_LABELS[catId]}
                 </span>
                 <h2 className="text-lg sm:text-xl font-semibold text-white leading-snug mb-2">

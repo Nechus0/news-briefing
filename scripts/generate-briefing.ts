@@ -3,6 +3,11 @@
  * Search grounding) and writes it to public/data/latest.json, which
  * scripts/send-email.ts then reads to compose and send the daily email.
  *
+ * Also attaches today's Berlin weather (scripts/weather.ts) and Google
+ * Calendar agenda (scripts/calendar.ts) to the same JSON - both fetched
+ * independently of Gemini so a flaky weather/calendar call never blocks or
+ * breaks the news generation itself.
+ *
  * Runs both locally ("npm run generate", reading GEMINI_API_KEY from
  * .env.local) and inside the GitHub Actions workflow, once a day around
  * env.SEND_HOUR (Europe/Berlin) (GEMINI_API_KEY comes from a repo secret
@@ -14,6 +19,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { GoogleGenAI, Type } from '@google/genai';
 import type { NewsBrief, CategoryId } from '../src/types';
+import { fetchBerlinWeather } from './weather';
+import { fetchTodayCalendarEvents } from './calendar';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,6 +36,7 @@ const CATEGORY_IDS: CategoryId[] = [
   'ukraine-war',
   'middle-east-conflict',
   'global-health',
+  'feel-good-news',
 ];
 
 const CATEGORY_NAMES: Record<CategoryId, string> = {
@@ -37,6 +45,7 @@ const CATEGORY_NAMES: Record<CategoryId, string> = {
   'ukraine-war': 'Krieg in der Ukraine',
   'middle-east-conflict': 'Nahost-Konflikt',
   'global-health': 'Globale Gesundheit',
+  'feel-good-news': 'Gute Nachricht des Tages',
 };
 
 const PREFERRED_SOURCES = [
@@ -50,6 +59,9 @@ const PREFERRED_SOURCES = [
   'Le Monde (lemonde.fr)',
   'WHO (who.int)',
   'Health Policy Watch (healthpolicy-watch.news)',
+  'Good News Network (goodnewsnetwork.org)',
+  'Positive News (positive.news)',
+  'Reuters (reuters.com)',
 ];
 
 // Pro Kategorie ein paar naheliegende Beispielquellen aus der Liste oben,
@@ -61,6 +73,7 @@ const CATEGORY_SOURCE_HINTS: Record<CategoryId, string> = {
   'ukraine-war': 'z.B. BBC, New York Times, Die Zeit, Tagesschau',
   'middle-east-conflict': 'z.B. BBC, New York Times, Die Zeit, Al Jazeera',
   'global-health': 'z.B. WHO, Health Policy Watch, New York Times',
+  'feel-good-news': 'z.B. Good News Network, Positive News, Reuters, BBC, Tagesschau, Der Spiegel',
 };
 
 function currentBerlinSlot(): { date: string; schedule: string; formattedDate: string } {
@@ -261,12 +274,12 @@ diese Quellen, wenn sie zum Thema passende Berichterstattung haben (nutze ihre O
 ${PREFERRED_SOURCES.map((s) => `- ${s}`).join('\n')}
 Andere seriöse Quellen sind erlaubt, falls diese zu einem Thema nichts Passendes berichten.
 
-Wichtig zur Quellenvielfalt: Verteile die Quellen über die fünf Kategorien hinweg möglichst
+Wichtig zur Quellenvielfalt: Verteile die Quellen über die Kategorien hinweg möglichst
 unterschiedlich. Verlasse dich nicht wiederholt primär auf dieselbe Publikation (insbesondere
 nicht auf Al Jazeera für mehrere Kategorien gleichzeitig) - das Ziel ist eine ausgewogene Mischung
 über den ganzen Tag, nicht die Dominanz einer einzelnen Quelle.
 
-Du musst genau diese fünf Kategorien abdecken (deutsche Bezeichnung in Klammern, dahinter
+Du musst genau diese sechs Kategorien abdecken (deutsche Bezeichnung in Klammern, dahinter
 naheliegende Beispielquellen für diese Kategorie):
 1. world-news (Weltnachrichten): wichtige globale Entwicklungen, Geopolitik, internationale
    Abkommen. ${CATEGORY_SOURCE_HINTS['world-news']}
@@ -278,6 +291,15 @@ naheliegende Beispielquellen für diese Kategorie):
    ${CATEGORY_SOURCE_HINTS['middle-east-conflict']}
 5. global-health (Globale Gesundheit): Ausbrüche, WHO-Meldungen, Pandemien, Gesundheitspolitik.
    ${CATEGORY_SOURCE_HINTS['global-health']}
+6. feel-good-news (Gute Nachricht des Tages): GENAU EINE echte, verifizierbare positive
+   Meldung vom heutigen oder gestrigen Tag - z.B. eine wissenschaftliche oder medizinische
+   Durchbruchsmeldung (z.B. eine neue Behandlung/Heilung), eine bemerkenswerte menschliche
+   Leistung, eine Verbesserung bei Umwelt/Klima/Artenschutz, eine Rettungsaktion, oder eine
+   Geste besonderer Freundlichkeit/Solidarität mit realer Quelle. KEINE Erfindungen, keine
+   Klatschmeldungen, kein Sport-Ergebnis ohne besondere Geschichte dahinter. Bewusst der
+   optimistische Gegenpol zu den übrigen, überwiegend ernsten Kategorien - der Ton darf warm
+   und positiv sein, muss aber trotzdem sachlich korrekt und belegt bleiben.
+   ${CATEGORY_SOURCE_HINTS['feel-good-news']}
 
 Pro Kategorie:
 - headline: prägnante, professionelle Schlagzeile auf Deutsch (max. 15 Wörter).
@@ -288,13 +310,15 @@ Pro Kategorie:
 
 executiveSummary: exakt 5 kurze, eigenständige Sätze (kein Markdown, keine Aufzählungszeichen -
 das Frontend fügt die Bullet-Punkte selbst hinzu), einer pro Kategorie, in der Reihenfolge
-Weltnachrichten, Bundespolitik Deutschland, Krieg in der Ukraine, Nahost-Konflikt, Globale Gesundheit.
+Weltnachrichten, Bundespolitik Deutschland, Krieg in der Ukraine, Nahost-Konflikt, Globale
+Gesundheit. feel-good-news erscheint NICHT in der executiveSummary, sondern ausschließlich als
+eigene Kategorie am Ende.
 
 ${previousContext}
 `.trim();
 }
 
-async function generate(): Promise<NewsBrief> {
+async function generate(): Promise<Omit<NewsBrief, 'calendar' | 'weather'>> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'DEIN_GEMINI_API_KEY') {
     throw new Error(
@@ -325,7 +349,7 @@ async function generate(): Promise<NewsBrief> {
           properties: {
             executiveSummary: {
               type: Type.ARRAY,
-              description: 'Genau 5 kurze Sätze, einer pro Kategorie, ohne Bullet-Zeichen.',
+              description: 'Genau 5 kurze Sätze, einer pro Kategorie (ohne feel-good-news), ohne Bullet-Zeichen.',
               items: { type: Type.STRING },
             },
             categories: {
@@ -388,7 +412,7 @@ async function generate(): Promise<NewsBrief> {
         .map((s) => s.replace(/^[•\-*]\s*/, '').trim())
         .filter(Boolean);
 
-  const brief: NewsBrief = {
+  return {
     id: `${date}-${schedule}`,
     timestamp: new Date().toISOString(),
     formattedDate,
@@ -396,18 +420,35 @@ async function generate(): Promise<NewsBrief> {
     executiveSummary,
     categories: finalCategories,
   };
-
-  return brief;
 }
 
 async function main() {
   console.log('Generiere Daily News Briefing …');
-  const brief = await generate();
+
+  // Weather and calendar are independent of Gemini and of each other, so
+  // they're fetched concurrently with the news generation itself instead of
+  // serially after it - a slow (or misconfigured/unconfigured) weather or
+  // calendar call never adds to the critical path, and neither one throws
+  // (see fetchBerlinWeather / fetchTodayCalendarEvents), so Promise.all here
+  // is safe without extra try/catch.
+  const [briefCore, weather, calendarEvents] = await Promise.all([
+    generate(),
+    fetchBerlinWeather(),
+    fetchTodayCalendarEvents(),
+  ]);
+
+  const brief: NewsBrief = {
+    ...briefCore,
+    weather: weather ?? undefined,
+    calendar: calendarEvents ?? undefined,
+  };
 
   await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
   await fs.writeFile(OUTPUT_PATH, JSON.stringify(brief, null, 2), 'utf8');
   console.log(`Geschrieben: ${OUTPUT_PATH}`);
   console.log(`Slot: ${brief.formattedDate}, ${brief.schedule} Uhr`);
+  console.log(`Wetter: ${weather ? `${weather.tempMinC}-${weather.tempMaxC}°C, ${weather.description}` : 'nicht verfügbar'}`);
+  console.log(`Kalender: ${calendarEvents ? `${calendarEvents.length} Termin(e) heute` : 'nicht konfiguriert'}`);
 }
 
 main().catch((err) => {

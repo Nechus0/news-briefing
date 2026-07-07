@@ -12,6 +12,19 @@ export const demoBrief: NewsBrief = {
   formattedDate: 'Beispiel-Ausgabe',
   schedule: '08:00',
   isSimulated: true,
+  weather: {
+    tempMinC: 15,
+    tempMaxC: 24,
+    precipitationProbability: 20,
+    weatherCode: 2,
+    description: 'Teilweise bewölkt',
+    icon: '⛅',
+    sourceUrl: 'https://www.wetter.com/wetter/berlin/DE0001582.html',
+  },
+  calendar: [
+    { title: 'Standup', time: '09:30', allDay: false },
+    { title: 'Zahnarzt', time: '14:00', allDay: false, location: 'Praxis Dr. Müller' },
+  ],
   executiveSummary: [
     'Ebola-Ausbruch in der DR Kongo weitet sich aus: über 1.400 bestätigte Fälle, WHO beschleunigt Diagnostik und Behandlungsstudien.',
     'Koalition in Berlin einigt sich nach Marathonverhandlung auf ein größeres Steuer- und Rentenpaket.',
@@ -59,6 +72,13 @@ export const demoBrief: NewsBrief = {
       brief: 'Platzhaltertext – wird nach dem ersten automatischen Update durch eine echte Zusammenfassung ersetzt.',
       whyRelevant: 'Platzhalter – wird durch echte Einordnung ersetzt.',
       sources: [{ title: 'CNN', url: 'https://edition.cnn.com/' }],
+    },
+    {
+      id: 'feel-good-news',
+      name: 'Gute Nachricht des Tages',
+      headline: 'Beispiel: Seltene Schildkrötenart nach Auswilderungsprogramm stabil vermehrt',
+      brief: 'Platzhaltertext – wird nach dem ersten automatischen Update durch eine echte, positive Meldung des Tages ersetzt (z.B. eine wissenschaftliche Durchbruchsmeldung, eine Rettungsaktion oder eine besondere Geste der Freundlichkeit).',
+      sources: [{ title: 'Good News Network', url: 'https://www.goodnewsnetwork.org/' }],
     },
   ],
 };

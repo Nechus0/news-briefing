@@ -113,6 +113,12 @@ jobs:
         if: steps.gate.outputs.run == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Optional: only needed for the calendar card in the email. If
+          # either secret is missing, generate-briefing.ts simply skips the
+          # calendar section (see scripts/calendar.ts) - the news briefing
+          # itself is unaffected.
+          GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          GOOGLE_CALENDAR_ID: ${{ secrets.GOOGLE_CALENDAR_ID }}
         run: npm run generate
 
       # Commits the freshly generated data back into the repo right away

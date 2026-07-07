@@ -29,6 +29,7 @@ const CATEGORY_COLORS: Record<CategoryId, string> = {
   'ukraine-war': '#dc2626',
   'middle-east-conflict': '#ea580c',
   'world-news': '#7c3aed',
+  'feel-good-news': '#d97706',
 };
 
 function escapeHtml(str: string): string {
@@ -43,6 +44,7 @@ function renderCategory(brief: NewsBrief, id: CategoryId): string {
   const cat = brief.categories.find((c) => c.id === id);
   if (!cat) return '';
   const color = CATEGORY_COLORS[id];
+  const isFeelGood = id === 'feel-good-news';
 
   const sources = (cat.sources ?? [])
     .map(
@@ -53,10 +55,10 @@ function renderCategory(brief: NewsBrief, id: CategoryId): string {
 
   return `
     <tr><td style="padding:0 0 8px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e8f0;border-left:4px solid ${color};border-radius:12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${isFeelGood ? '#fffbeb' : '#ffffff'};border:1px solid ${isFeelGood ? '#fde68a' : '#e6e8f0'};border-left:4px solid ${color};border-radius:12px;">
         <tr><td style="padding:18px 20px;">
           <span style="display:inline-block;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${color};margin-bottom:8px;">
-            ${escapeHtml(cat.name || CATEGORY_LABELS[id])}
+            ${isFeelGood ? '&#10024; ' : ''}${escapeHtml(cat.name || CATEGORY_LABELS[id])}
           </span>
           <div style="font-size:16px;font-weight:700;color:#12142a;line-height:1.4;margin-bottom:8px;">
             ${escapeHtml(cat.headline)}
@@ -77,7 +79,76 @@ function renderCategory(brief: NewsBrief, id: CategoryId): string {
     </td></tr>`;
 }
 
-function renderEmailHtml(brief: NewsBrief): string {
+/** Weather card for today's Berlin forecast - the whole card links out to
+ * weather.sourceUrl (see scripts/weather.ts). Omitted entirely when
+ * `weather` is undefined (fetch failed / no data), so a broken weather API
+ * never leaves a half-empty card in the email. */
+function renderWeather(brief: NewsBrief): string {
+  const w = brief.weather;
+  if (!w) return '';
+
+  return `
+    <tr><td style="padding:0 0 10px;">
+      <a href="${escapeHtml(w.sourceUrl)}" target="_blank" style="display:block;text-decoration:none;color:inherit;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;">
+          <tr>
+            <td style="padding:16px 20px;width:56px;vertical-align:middle;">
+              <span style="font-size:34px;line-height:1;">${w.icon}</span>
+            </td>
+            <td style="padding:16px 20px 16px 0;vertical-align:middle;">
+              <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#2563eb;margin-bottom:4px;">
+                Wetter heute &middot; Berlin
+              </div>
+              <div style="font-size:16px;font-weight:700;color:#12142a;">
+                ${w.tempMinC}&deg; &ndash; ${w.tempMaxC}&deg;C &middot; ${escapeHtml(w.description)}
+              </div>
+              <div style="font-size:13px;color:#3a3d52;margin-top:2px;">
+                Regenwahrscheinlichkeit: ${w.precipitationProbability}% &nbsp;&middot;&nbsp; Details auf wetter.com &#8599;
+              </div>
+            </td>
+          </tr>
+        </table>
+      </a>
+    </td></tr>`;
+}
+
+/** Today's Google Calendar agenda. Omitted entirely when `calendar` is
+ * undefined (not configured / fetch failed). Shows a friendly empty state
+ * when it IS configured but there simply are no events today. */
+function renderCalendar(brief: NewsBrief): string {
+  const events = brief.calendar;
+  if (events === undefined) return '';
+
+  const rows = events.length
+    ? events
+        .map(
+          (e) => `
+          <tr>
+            <td style="padding:4px 10px 4px 0;font-size:13px;font-weight:700;color:#12142a;white-space:nowrap;vertical-align:top;width:78px;">
+              ${escapeHtml(e.time)}
+            </td>
+            <td style="padding:4px 0;font-size:13px;color:#3a3d52;vertical-align:top;">
+              ${escapeHtml(e.title)}${e.location ? `<span style="color:#9298b0;"> &middot; ${escapeHtml(e.location)}</span>` : ''}
+            </td>
+          </tr>`,
+        )
+        .join('')
+    : `<tr><td style="padding:4px 0;font-size:13px;color:#5b6178;">Keine Termine heute &#127881;</td></tr>`;
+
+  return `
+    <tr><td style="padding:0 0 18px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e8f0;border-radius:12px;">
+        <tr><td style="padding:16px 20px;">
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#9298b0;margin-bottom:10px;">
+            Termine heute
+          </div>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">${rows}</table>
+        </td></tr>
+      </table>
+    </td></tr>`;
+}
+
+export function renderEmailHtml(brief: NewsBrief): string {
   const summaryItems = brief.executiveSummary
     .map(
       (line) =>
@@ -86,6 +157,7 @@ function renderEmailHtml(brief: NewsBrief): string {
     .join('');
 
   const categoryRows = CATEGORY_ORDER.map((id) => renderCategory(brief, id)).join('');
+  const glanceRows = `${renderWeather(brief)}${renderCalendar(brief)}`;
 
   return `<!doctype html>
 <html lang="de">
@@ -101,6 +173,7 @@ function renderEmailHtml(brief: NewsBrief): string {
           <div style="font-size:22px;font-weight:800;color:#12142a;">${escapeHtml(brief.formattedDate)}</div>
           <div style="font-size:13px;color:#5b6178;margin-top:2px;">Ausgabe ${escapeHtml(brief.schedule)} Uhr</div>
         </td></tr>
+        ${glanceRows ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${glanceRows}</table>` : ''}
         <tr><td style="padding:0 0 18px;">
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #e6e8f0;border-radius:12px;">
             <tr><td style="padding:18px 20px;">
@@ -122,8 +195,26 @@ function renderEmailHtml(brief: NewsBrief): string {
 </html>`;
 }
 
-function renderEmailText(brief: NewsBrief): string {
-  const lines = [`Daily News Briefing – ${brief.formattedDate}, ${brief.schedule} Uhr`, '', 'EXECUTIVE SUMMARY'];
+export function renderEmailText(brief: NewsBrief): string {
+  const lines = [`Daily News Briefing – ${brief.formattedDate}, ${brief.schedule} Uhr`, ''];
+
+  if (brief.weather) {
+    const w = brief.weather;
+    lines.push(
+      `WETTER BERLIN: ${w.tempMinC}–${w.tempMaxC}°C, ${w.description}, Regenwahrscheinlichkeit ${w.precipitationProbability}% (${w.sourceUrl})`,
+    );
+  }
+  if (brief.calendar) {
+    lines.push('TERMINE HEUTE:');
+    if (brief.calendar.length === 0) {
+      lines.push('- Keine Termine heute');
+    } else {
+      brief.calendar.forEach((e) => lines.push(`- ${e.time}  ${e.title}${e.location ? ` (${e.location})` : ''}`));
+    }
+  }
+  if (brief.weather || brief.calendar) lines.push('');
+
+  lines.push('EXECUTIVE SUMMARY');
   brief.executiveSummary.forEach((s) => lines.push(`- ${s}`));
   lines.push('');
 
