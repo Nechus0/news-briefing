@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "generate": "tsx scripts/generate-briefing.ts",
     "send-email": "tsx scripts/send-email.ts",
+    "notify-failure": "tsx scripts/notify-failure.ts",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
