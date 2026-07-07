@@ -247,14 +247,28 @@ async function generate(): Promise<NewsBrief> {
   return brief;
 }
 
-async function main() {
-  console.log('Generiere Daily News Briefing …');
-  const brief = await generate();
-
-  await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
-  await fs.writeFile(OUTPUT_PATH, JSON.stringify(brief, null, 2), 'utf8');
-  console.log(`Geschrieben: ${OUTPUT_PATH}`);
-  console.log(`Slot: ${brief.formattedDate}, ${brief.schedule} Uhr`);
+/** Retries transient Gemini API errors (503 "overloaded", 429 rate limit)
+ * with backoff (1, 3, 5, 10 minutes), since these are usually resolved
+ * within minutes and shouldn't sink an entire unattended daily run. The
+ * workflow starts at 07:50 (Europe/Berlin) precisely to leave room for
+ * this before the 08:00 send time. */
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  attempts = 5,
+  delaysMs = [60_000, 180_000, 300_000, 600_000],
+): Promise<T> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isLastAttempt = attempt === attempts;
+      if (isLastAttempt || !isTransientError(err)) throw err;
+      const delay = delaysMs[attempt - 1] ?? delaysMs[delaysMs.length - 1];
+      console.warn(`Gemini-API vorübergehend nicht verfügbar (Versuch ${attempt}/${attempts}), erneuter Versuch in ${delay / 1000}s …`);
+      await sleep(delay);
+    }
+  }
+  throw new Error('unreachable');
 }
 
 main().catch((err) => {
