@@ -18,7 +18,7 @@ on:
   #     no briefing that day at all, since there was only a single attempt.
   #     Now the 08:45 and 09:45 runs act as automatic retries.
   schedule:
-    - cron: '55 * * * *'
+    - cron: '58 * * * *'
   # Lets you trigger a run manually from the Actions tab - sends immediately
   # (skips the "wait until 08:00" step below) and ignores the dedupe check,
   # so this doubles as the way to send yourself a test email on demand.
@@ -121,11 +121,11 @@ jobs:
         if: steps.gate.outputs.run == 'true' && github.event_name == 'schedule'
         run: |
           today=$(TZ=Europe/Berlin date +%Y-%m-%d)
-          target_epoch=$(TZ=Europe/Berlin date -d "$today 08:00:00" +%s)
+          target_epoch=$(TZ=Europe/Berlin date -d "$today 16:00:00" +%s)
           now_epoch=$(date +%s)
           wait_seconds=$(( target_epoch - now_epoch ))
           if [ "$wait_seconds" -gt 0 ]; then
-            echo "Warte ${wait_seconds}s bis 08:00 Uhr (Europe/Berlin) …"
+            echo "Warte ${wait_seconds}s bis 16:00 Uhr (Europe/Berlin) …"
             sleep "$wait_seconds"
           else
             echo "Bereits nach 08:00 Uhr (z.B. wegen Retry-Lauf) - sende sofort."
