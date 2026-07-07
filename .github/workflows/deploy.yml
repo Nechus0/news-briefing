@@ -41,7 +41,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.gate.outputs.run == 'true'
-        run: npm ci
+        run: npm install
 
       - name: Generate briefing via Gemini API
         if: steps.gate.outputs.run == 'true'
