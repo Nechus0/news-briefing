@@ -15,7 +15,6 @@ export interface NewsCategory {
   name: string;
   headline: string;
   brief: string;
-  whyRelevant: string;
   sources: NewsSource[];
 }
 
