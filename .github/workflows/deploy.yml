@@ -128,7 +128,7 @@ jobs:
             echo "Warte ${wait_seconds}s bis 16:00 Uhr (Europe/Berlin) …"
             sleep "$wait_seconds"
           else
-            echo "Bereits nach 08:00 Uhr (z.B. wegen Retry-Lauf) - sende sofort."
+            echo "Bereits nach 16:00 Uhr (z.B. wegen Retry-Lauf) - sende sofort."
           fi
 
       - name: Send briefing via email
