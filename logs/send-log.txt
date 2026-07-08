@@ -1,3 +1,4 @@
 # Protokoll aller Versand-Versuche (wird von .github/workflows/deploy.yml automatisch ergänzt)
 # Format: YYYY-MM-DD HH:MM (Europe/Berlin, Sendefenster HH:00, Trigger: schedule|workflow_dispatch) - ERFOLGREICH | FEHLGESCHLAGEN (Generierung|E-Mail-Versand)
 2026-07-07 18:03 (Europe/Berlin, Sendefenster 17:00, Trigger: workflow_dispatch) - ERFOLGREICH
+2026-07-08 08:59 (Europe/Berlin, Sendefenster 08:00, Trigger: schedule) - FEHLGESCHLAGEN (Generierung)
